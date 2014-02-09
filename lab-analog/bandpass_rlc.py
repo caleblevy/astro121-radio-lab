@@ -50,5 +50,6 @@ if __name__ == '__main__':
     plt.ylabel('Gain (dB)')
     plt.title('Bode plot of an RLC bandpass filter')
     plt.xscale('log')
+    plt.tight_layout()
 
     plt.show()
