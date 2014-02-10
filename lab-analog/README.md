@@ -29,7 +29,16 @@ set the file extension used for the frames, the number of frames, and the output
 directory to save the frames to. It should be noted that, unfortunately, only
 Adobe Reader will display animations in a PDF document. However, output of this
 script can be saved in PNG format and imagemagick can be used to create a GIF
-image out of the frames.
+image out of the frames.  
+  
+Creating a GIF image:  
+There are two steps to creating a GIF image of a sample AM signal. The first is
+to generate the image frames:  
+$ python envelope.py -e png -n <numframes> -o /path/to/frame/dir/  
+Next, one must go to the directory with the frames for the gif and use
+imagemagick to combine them into a GIF image:  
+$ cd /path/to/frame/dir/  
+$ convert -delay <time> -loop 0 am-wave-\* name\_of\_gif\_image.gif
 
 root\_n.py
 -------------------
