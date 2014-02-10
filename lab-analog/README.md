@@ -34,11 +34,11 @@ image out of the frames.
 Creating a GIF image:  
 There are two steps to creating a GIF image of a sample AM signal. The first is
 to generate the image frames:  
-$ python envelope.py -e png -n <numframes> -o /path/to/frame/dir/  
+$ python envelope.py -e png -n \<numframes\> -o /path/to/frame/dir/  
 Next, one must go to the directory with the frames for the gif and use
 imagemagick to combine them into a GIF image:  
 $ cd /path/to/frame/dir/  
-$ convert -delay <time> -loop 0 am-wave-\* name\_of\_gif\_image.gif
+$ convert -delay \<time\> -loop 0 am-wave-\* name\_of\_gif\_image.gif
 
 root\_n.py
 -------------------
