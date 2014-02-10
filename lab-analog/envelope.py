@@ -22,6 +22,7 @@ import os
 import sys
 import getopt
 import numpy as np
+import matplotlib as mpl; mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 def usage(code):
@@ -93,4 +94,7 @@ if __name__ == '__main__':
         plt.plot(time, carrier_wave * signal_wave, 'b')
         plt.plot(time, signal_wave, 'r')
         plt.axis('off')
-        plt.savefig(outdir + '/am-wave-' + str(i) + '.' + extension)
+
+        frame_name = outdir + '/am-wave-' + str(i) + '.' + extension
+        print 'Saving frame:', frame_name
+        plt.savefig(frame_name, bbox_inches='tight')

@@ -53,4 +53,5 @@ if __name__ == '__main__':
     plt.ylabel(data_label)
     plt.title('Spread of sampled means')
     plt.legend(plots, (data_label, line_label))
+    plt.tight_layout()
     plt.show()

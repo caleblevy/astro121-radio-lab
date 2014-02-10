@@ -37,7 +37,7 @@ def usage(code):
     print 'Sampling and binning options:'
     print '    -b: Number of bins in the histogram (default: 10)'
     print '    -n: Number of samples from the distribution (default: 10).'
-    print '    -N: Number of iterations (default: 1000).'
+    print '    -N: Number of sampled means (default: 1000).'
     print
     print 'When no random number distribution is set, numbers are selected'
     print 'from an even distribution ranging from 0 to 1.'
@@ -147,5 +147,6 @@ if __name__ == '__main__':
     plt.xlabel('Sampled mean')
     plt.ylabel('Counts')
     plt.title('Sampling from a ' + rand_name)
+    plt.tight_layout()
 
     plt.show()
