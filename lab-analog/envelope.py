@@ -82,19 +82,29 @@ if __name__ == '__main__':
     signal  = 440.0
     carrier = 10 * signal
     total_time = 2.0 / signal
+    offset = 1.25
+
+    # For formatting filenames
+    ndigits = len(str(nframes))
 
     time = np.linspace(0, total_time, 1000)
     for i in range(nframes):
+        # Generate the wave
         phase = 2 * np.pi * i / nframes
-
         carrier_wave = cwave(time, carrier, phase)
-        signal_wave  = swave(time, signal, phase, 1.25)
+        signal_wave  = swave(time, signal, phase, offset)
 
-        plt.figure()
+        # Generate the frame
+        plt.figure(figsize=(8.0,4.5))
+        plt.subplots_adjust(0, 0, 1, 1)
         plt.plot(time, carrier_wave * signal_wave, 'b')
         plt.plot(time, signal_wave, 'r')
+        plt.axis([0, total_time, -offset-1, offset+1])
         plt.axis('off')
 
-        frame_name = outdir + '/am-wave-' + str(i) + '.' + extension
+        # Save the frame
+        frame_num = '0' * ndigits + str(i)
+        frame_num = frame_num[-ndigits:]
+        frame_name = outdir + '/am-wave-' + frame_num + '.' + extension
         print 'Saving frame:', frame_name
-        plt.savefig(frame_name, bbox_inches='tight')
+        plt.savefig(frame_name, bbox_inches='tight', pad_inches=0)
