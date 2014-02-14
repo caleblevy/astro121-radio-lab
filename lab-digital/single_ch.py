@@ -96,9 +96,8 @@ if __name__ == '__main__':
     DFEC.set_srs(srs_num, dbm=0, off=0, pha=0)
     DFEC.set_srs(srs_num, vpp=v_pp)
 
-    # Just use 20 MHz for the sampling rate to start off. This means that
-    # dual-mode must be off.
-    sample_time = 0.1 # Don't sample for longer than 1/10th of a second
+    # Don't sample for longer than 1/10th of a second.
+    sample_time = 0.1
     nsamples = min(262143, int(sample_rate * sample_time))
     dual_mode = False
 
