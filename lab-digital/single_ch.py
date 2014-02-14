@@ -126,7 +126,7 @@ if __name__ == '__main__':
             metadata = np.array([ ('SAMPRATE', sample_rate)
                                 , ('SIGFREQ', sig_freqs[i])
                                 , ('VOLTPP', v_pp)
-                                ])
+                                ], dtype=object)
             np.savez(filename, metadata, samples)
 
             # Organize formatting for printing output.
