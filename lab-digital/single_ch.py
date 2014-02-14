@@ -53,6 +53,37 @@ if 'ugastro.berkeley.edu' not in socket.gethostname():
 # The DFEC module to control the function generator can now be imported.
 import DFEC
 
+def make_sample(srs_num,
+                signal_freq,
+                sample_rate,
+                nsamples,
+                outfbase,
+                store_int,
+                v_pp):
+    """
+    Record a signal and save it to disk.
+    """
+    print 'Setting SRS', srs_num,
+    print 'to output at', signal_freq/1e6, 'MHz.'
+    DFEC.set_srs(srs_num, freq=signal_freq)
+    time.sleep(5) # The generator has some delay.
+
+    # record voltage samples.
+    print 'Sampling...'
+    samples = DFEC.sampler(nsamples,
+                           sample_rate,
+                           dual=False,
+                           integer=store_int)
+
+    # Save an npz file containing the data and a header
+    filename = outfbase + '.npz'
+    print 'Recording', nsamples, 'samples to', filename + '.'
+    metadata = np.array([ ('SAMPRATE', sample_rate)
+                        , ('SIGFREQ', signal_freq)
+                        , ('VOLTPP', v_pp)
+                        ], dtype=object)
+    np.savez(filename, metadata, samples)
+
 if __name__ == '__main__':
     # Parse options from the command line
     try:
@@ -99,56 +130,30 @@ if __name__ == '__main__':
     # Don't sample for longer than 1/10th of a second.
     sample_time = 0.1
     nsamples = min(262143, int(sample_rate * sample_time))
-    dual_mode = False
 
     # Get samples.
     if nfreqs != None:
         step = 0.1
         sig_freqs = np.linspace(step, nfreqs * step, nfreqs) * sample_rate
 
+        # Record sample for each frequency in the list.
         for i in range(nfreqs):
-            print 'Setting SRS', srs_num,
-            print 'to output at', sig_freqs[i]/1e6, 'MHz.'
-            DFEC.set_srs(srs_num, freq=sig_freqs[i])
-            time.sleep(5) # The generator has some delay.
-
-            # record voltage samples.
-            print 'Sampling...'
-            samples = DFEC.sampler(nsamples,
-                                   sample_rate,
-                                   dual=dual_mode,
-                                   integer=store_int)
-
-            # Save an npz file containing the data and a header
-            filename = outfbase + '-' + str(i+1) + '.npz'
-            print 'Recording', nsamples, 'samples to', filename + '.'
-            metadata = np.array([ ('SAMPRATE', sample_rate)
-                                , ('SIGFREQ', sig_freqs[i])
-                                , ('VOLTPP', v_pp)
-                                ], dtype=object)
-            np.savez(filename, metadata, samples)
+            make_sample(srs_num,
+                        sig_freqs[i],
+                        sample_rate,
+                        nsamples,
+                        outfbase + '-' + str(i+1),
+                        store_int,
+                        v_pp)
 
             # Organize formatting for printing output.
             if i + 1 < nfreqs:
                 print
     else:
-        print 'Setting SRS', srs_num,
-        print 'to output at', signal_freq/1e6, 'MHz.'
-        DFEC.set_srs(srs_num, freq=signal_freq)
-        time.sleep(5) # The generator has some delay.
-
-        # record voltage samples.
-        print 'Sampling...'
-        samples = DFEC.sampler(nsamples,
-                               sample_rate,
-                               dual=dual_mode,
-                               integer=store_int)
-
-        # Save an npz file containing the data and a header
-        filename = outfbase + '.npz'
-        print 'Recording', nsamples, 'samples to', filename + '.'
-        metadata = np.array([ ('SAMPRATE', sample_rate)
-                            , ('SIGFREQ', signal_freq)
-                            , ('VOLTPP', v_pp)
-                            ])
-        np.savez(filename, metadata, samples)
+        make_sample(srs_num,
+                    signal_freq,
+                    sample_rate,
+                    nsamples,
+                    outfbase,
+                    store_int,
+                    v_pp)
