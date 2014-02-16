@@ -12,6 +12,7 @@ frequency resolution of the FFT.
     Flags:  
         -h: Print this help message and exit.  
         -i: Input filename (required).  
+        -n: Number of cycles of the input wave to plot.
         -N: Number of samples to use.  
         -o: Output filename base.  
         -p: Percentage of the signal to use.  
