@@ -24,7 +24,7 @@ import getopt
 import numpy as np
 import numpy.fft as fft
 import scipy.integrate as spi
-import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 def usage(code):
     """
@@ -159,12 +159,16 @@ if __name__ == '__main__':
                 print 'ERROR: Percentage of signal too high!'
                 usage(1)
         elif opt == '-q':
+            mpl.use('Agg')
             disp_plots = False
     if infilename == None:
         print 'ERROR: No input file.'
         usage(1)
     if outdir != None:
         os.system('mkdir -pv ' + outdir)
+
+    # matplotlib.use must be called before import matplotlib.pyplot
+    import matplotlib.pyplot as plt
 
     # Extract the signal from the .npz file
     print 'Importing data from', infilename + '.'
@@ -188,6 +192,7 @@ if __name__ == '__main__':
     # Compute t and signal(t)
     time = np.arange(nsamples, dtype=float) / sample_rate
     signal = infile['arr_1'][:nsamples]
+    infile.close()
 
     # Compute the Fourier transform of the signal.
     print 'Computing the DFT of the signal.'
