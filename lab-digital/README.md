@@ -16,6 +16,7 @@ frequency resolution of the FFT.
         -N: Number of samples to use.  
         -o: Output filename base.  
         -p: Percentage of the signal to use.  
+        -q: Do not display plots.  
 
 single\_ch.py
 -----------------------------
