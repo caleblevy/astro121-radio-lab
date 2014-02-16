@@ -1,0 +1,56 @@
+#!/bin/bash
+
+################################################################################
+## This script runs get_spec_1ch.py on all of the data files
+## Copyright (C) 2014  Isaac Domagalski: idomagalski@berkeley.edu
+##
+## This program is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+################################################################################
+
+pltdir=data/plots
+
+for i in `find data -type f -name "*.npz"`; do
+    pltname=${i#data\/}
+    pltname=${pltname%.npz}
+    
+    # Run the get_spec_1ch.py script using a variety of sample sizes, if valid
+
+    # Get the length of the data set
+    len=`python -c "import numpy as np; \
+        x = np.load('$i'); \
+        print len(x['arr_1']); \
+        x.close()"`
+
+    # If the length is large enough, vary the number of samples taken
+    if [ $(($len > 256)) ]; then
+        # Determine the number of of samples to be used.
+        min_pow=0
+        while [ `python -c "print int(2 ** $min_pow < $len)"` = 1 ]; do
+            min_pow=$(($min_pow + 1))
+        done
+        
+        # Run the script varying the number of samples used.
+        pow=`python -c "print min($min_pow, 12)"`
+        for j in `python -c "for i in range(8, $pow): print 2 ** i;"`; do
+            python get_spec_1ch.py -i $i -o $pltdir/$j/$pltname -q -N $j \
+                || exit 1
+        done
+    fi
+
+    # Run the spectrum on the entire signal
+    python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q || exit 1
+
+    echo
+done
+
