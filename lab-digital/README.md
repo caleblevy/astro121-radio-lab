@@ -24,11 +24,11 @@ undergrad astronomy lab. This script checks that the computer running it is on
 the ugastro.berkeley.edu network and if it is, then the script collects data.
 The data is saved as an npz file with the following contents:
 
-Data file contents:  
-'arr\_0': Information of the run that got collected (e.g. sample rate, etc...)  
-'arr\_1': The signal, measured in volts.
+    Data file contents:  
+    'arr\_0': Information of the run that got collected (e.g. sample rate, etc...)  
+    'arr\_1': The signal, measured in volts.
 
-    Usage:, -o /out/filename/base [options]  
+    Usage: -o /out/filename/base [options]  
     Flags:  
         -h: Print this help message and exit.  
         -f: Signal frequency.  
