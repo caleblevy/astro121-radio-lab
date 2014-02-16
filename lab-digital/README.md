@@ -6,7 +6,8 @@ get\_spec\_1ch.py
 
 This script takes in the data that gets produced in single\_ch.py and produces a
 spectrum, demonstrates a homemade DFT to numpy's FFT, and estimates the
-frequency resolution of the FFT. 
+frequency resolution of the FFT. The run\_spec script can be used to run
+get\_spec\_1ch.py on all of the data collected.
 
     Usage: get_spec_1ch.py -i infile [options]  
     Flags:  
