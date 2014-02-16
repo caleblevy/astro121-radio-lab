@@ -27,7 +27,7 @@ The data is saved as an npz file with the following contents:
     Data file contents:  
     'arr\_0': Information of the run that got collected (e.g. sample rate, etc...)  
     'arr\_1': The signal, measured in volts.
---------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
     Usage: -o /out/filename/base [options]  
     Flags:  
         -h: Print this help message and exit.  
