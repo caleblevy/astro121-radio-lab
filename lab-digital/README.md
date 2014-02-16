@@ -20,10 +20,12 @@ single\_ch.py
 -----------------------------
 
 This script records data from a SRS function generator in the UC Berkeley
-undergrad astronomy lab. The data is saved as an npz file.
+undergrad astronomy lab. This script checks that the computer running it is on
+the ugastro.berkeley.edu network and if it is, then the script collects data.
+The data is saved as an npz file with the following contents:
 
 Data file contents:  
-'arr\_0': Information of the run that got collected (e.g. sample rate, etc...)
+'arr\_0': Information of the run that got collected (e.g. sample rate, etc...)  
 'arr\_1': The signal, measured in volts.
 
     Usage:, -o /out/filename/base [options]  
