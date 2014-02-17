@@ -110,10 +110,13 @@ def plot_units(ticks, tick_unit):
 def savefig(figname):
     """
     Print a message to tell that a figure is being saved, then save the
-    figure.
+    figure to both PDF and PNG formats. Since the figure is being saved
+    to multiple formats, the extension should be excluded from the
+    figure name when passing it to this function.
     """
     print 'Saving plot to', figname + '.'
-    plt.savefig(figname, bbox_inches='tight')
+    plt.savefig(figname + '.pdf', bbox_inches='tight')
+    plt.savefig(figname + '.png', bbox_inches='tight')
 
 def switch_halves(array):
     """
@@ -287,7 +290,7 @@ if __name__ == '__main__':
     plt.yscale('log')
     plt.tight_layout()
     if outfbase != None:
-        savefig(outfbase + '-domains.pdf')
+        savefig(outfbase + '-domains')
 
     # Plot an overlay of numpy's FFT vs my DFT
     plt.figure(figsize=(14,5.25))
@@ -311,7 +314,7 @@ if __name__ == '__main__':
     plt.title('Relative difference of DFT computations')
     plt.tight_layout()
     if outfbase != None:
-        savefig(outfbase + '-compare-dft.pdf')
+        savefig(outfbase + '-compare-dft')
 
     # Plot the fine frequency space.
     plt.figure(figsize=(7,5.25))
@@ -352,7 +355,7 @@ if __name__ == '__main__':
     plt.legend(loc='upper left', prop={'size':12})
     plt.tight_layout()
     if outfbase != None:
-        savefig(outfbase + '-freq-res.pdf')
+        savefig(outfbase + '-freq-res')
 
     # Plot the simulated signal
     plt.figure(figsize=(7,5.25))
@@ -367,7 +370,7 @@ if __name__ == '__main__':
     plt.title('Simulation of the sampler')
     plt.legend(loc='upper left', prop={'size':12})
     if outfbase != None:
-        savefig(outfbase + '-sim.pdf')
+        savefig(outfbase + '-sim')
 
     if disp_plots:
         plt.show()
