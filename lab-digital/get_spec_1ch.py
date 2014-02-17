@@ -114,7 +114,8 @@ def savefig(figname):
     to multiple formats, the extension should be excluded from the
     figure name when passing it to this function.
     """
-    print 'Saving plot to', figname + '.'
+    print 'Saving plot to', figname + '.pdf.'
+    print 'Saving plot to', figname + '.png.'
     plt.savefig(figname + '.pdf', bbox_inches='tight')
     plt.savefig(figname + '.png', bbox_inches='tight')
 
