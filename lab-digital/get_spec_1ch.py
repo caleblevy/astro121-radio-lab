@@ -297,7 +297,8 @@ if __name__ == '__main__':
     plt.figure(figsize=(14,5.25))
     plt.subplot(1,2,1)
     plt.plot(freq, pspec_dft,      label='Homemade DFT')
-    plt.plot(freq, 10 * pspec_np,  label='Numpy\'s FFT $\\times$ 10')
+    # Multiplying by 100 gives a visible offset when plotting on a log scale.
+    plt.plot(freq, 100 * pspec_np, label='Numpy\'s FFT $\\times$ 100')
     ax = plt.gca()
     freq_u, freq_ticks = plot_units(ax.get_xticks(), 'Hz')
     ax.set_xticklabels(map(str, freq_ticks))
