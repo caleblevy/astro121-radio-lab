@@ -36,7 +36,7 @@ for i in `find data -type f -name "*.npz"`; do
         x.close()"`
 
     # If the length is large enough, vary the number of samples taken
-    if [ $(($len > 256)) ]; then
+    if [ "X$(($len > 256))" = X1 ]; then
         # Determine the number of of samples to be used.
         min_pow=0
         while [ `python -c "print int(2 ** $min_pow < $len)"` = 1 ]; do
@@ -65,7 +65,7 @@ for i in `find data -type f -name "*.npz"`; do
 
     # Run the spectrum on the entire signal for large signals. This is off by
     # default as it makes the run script very slow.
-    if [ $(($len > 2048)) ] && [ "X$1" = "Xslow" ]; then
+    if [ "X$(($len > 2048))" = "X1" ] && [ "X$1" = "Xslow" ]; then
         echo "Generating spectra on file $filenum out of $numfiles."
         echo "Using entire sample. This may take a while."
         echo "python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q"

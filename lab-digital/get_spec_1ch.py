@@ -296,8 +296,8 @@ if __name__ == '__main__':
     # Plot an overlay of numpy's FFT vs my DFT
     plt.figure(figsize=(14,5.25))
     plt.subplot(1,2,1)
-    plt.plot(freq, pspec_dft, label='Homemade DFT')
-    plt.plot(freq, pspec_np,  label='Numpy\'s FFT')
+    plt.plot(freq, pspec_dft,      label='Homemade DFT')
+    plt.plot(freq, 10 * pspec_np,  label='Numpy\'s FFT $\\times$ 10')
     ax = plt.gca()
     freq_u, freq_ticks = plot_units(ax.get_xticks(), 'Hz')
     ax.set_xticklabels(map(str, freq_ticks))
@@ -330,12 +330,6 @@ if __name__ == '__main__':
     res_label += '\nMeasured $\Delta f = ' + str(round(freq_res, 1)) + '$ Hz'
     pred_label='Predicted $\Delta f = ' + str(round(freq_res_th, 1)) + '$ Hz'
     meas_label='Measured $\Delta f = ' + str(round(freq_res, 1)) + '$ Hz'
-##    plt.annotate(res_label,
-##                (start_freq - freq_res/20, freq_height + freq_height/15),
-##                (start_freq - 5*freq_res,  freq_height + freq_height/2),
-##                xycoords='data',
-##                arrowprops={'facecolor':'k'},
-##                bbox={'facecolor':'w', 'pad':10})
     plt.plot([start_freq, end_freq],
              [freq_height2, freq_height2],
              '#555753',
