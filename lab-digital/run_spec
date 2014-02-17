@@ -55,12 +55,21 @@ for i in `find data -type f -name "*.npz"`; do
             echo
             run=$(($run + 1))
         done
+    else
+        # No variation on number of samples used for short signals.
+        echo "Generating spectra on file $filenum out of $numfiles."
+        echo "python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q"
+        python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q || exit 1
+        echo
     fi
 
-    # Run the spectrum on the entire signal.
-    echo "Generating spectra on file $filenum out of $numfiles."
-    echo "Using entire sample. This may take a while."
-    echo "python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q"
-    python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q || exit 1
-    echo
+    # Run the spectrum on the entire signal for large signals. This is off by
+    # default as it makes the run script very slow.
+    if [ $(($len > 2048)) ] && [ "X$1" = "Xslow" ]; then
+        echo "Generating spectra on file $filenum out of $numfiles."
+        echo "Using entire sample. This may take a while."
+        echo "python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q"
+        python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q || exit 1
+        echo
+    fi
 done
