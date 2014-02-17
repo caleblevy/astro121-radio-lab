@@ -45,19 +45,22 @@ for i in `find data -type f -name "*.npz"`; do
         
         # Run the script varying the number of samples used.
         pow=`python -c "print min($min_pow, 12)"`
+        run=1
         for j in `python -c "for i in range(8, $pow): print 2 ** i;"`; do
             echo "Generating spectra on file $filenum out of $numfiles."
+            echo "Sample size variation $run of $(($pow - 8))."
             echo "python get_spec_1ch.py -i $i -o $pltdir/$j/$pltname -q -N $j"
             python get_spec_1ch.py -i $i -o $pltdir/$j/$pltname -q -N $j \
                 || exit 1
             echo
+            run=$(($run + 1))
         done
     fi
 
     # Run the spectrum on the entire signal.
     echo "Generating spectra on file $filenum out of $numfiles."
+    echo "Using entire sample. This may take a while."
     echo "python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q"
     python get_spec_1ch.py -i $i -o $pltdir/$len/$pltname -q || exit 1
     echo
 done
-
