@@ -326,7 +326,7 @@ if __name__ == '__main__':
 
     # Number of points to plot is determined by the number of cycles of the
     # input wave that are getting plotted.
-    if sample_rate / signal_freq > 1:
+    if sample_rate / signal_freq >= 1:
         nplot = min(nsamples, ncycles * int(sample_rate / signal_freq))
     else:
         nplot = nsamples
