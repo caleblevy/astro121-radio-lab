@@ -41,6 +41,22 @@ def usage(code):
     print '    -q: Do not display plots.'
     sys.exit(code)
 
+def autoround(freq, res=None):
+    """
+    This function rounds frequencies based on some given frequency
+    resolution.
+    """
+    fpower = int(np.log10(freq))
+
+    if res == None:
+        freq = round(freq / 10**fpower, 2) * 10**fpower
+    else:
+        rpower = int(np.log10(res))
+        freq = round(freq / 10**fpower, fpower-rpower) * 10**fpower
+        res  = round(res / 10**rpower) * 10**rpower
+
+    return (freq, res)
+
 def dft_sum(signal):
     """
     Compute the Discrete Fourier Transform. This code is designed to be
@@ -75,7 +91,7 @@ def get_ps(dft, signal):
     """
     return np.abs(dft(signal)) ** 2
 
-def plot_units(ticks, tick_unit):
+def plot_units(ticks, tick_unit, conv_int=False):
     """
     Convert the unit of a plot into something more readable:
     Example: 0.0001 s -> 0.1 ms or 100 microseconds.
@@ -83,7 +99,8 @@ def plot_units(ticks, tick_unit):
     Returns: (tick_unit, ticks)
     """
     units = {0:r'', 1:r'k', 2:r'M', 3:r'G', -1:r'm', -2:r'$\mu ', -3:'n'}
-    ticks = np.array(ticks[:])
+    if hasattr(ticks, '__iter__'):
+        ticks = np.array(ticks[:])
 
     # Determine the scale of the ticks
     rms_tick = np.sqrt(np.mean(ticks**2))
@@ -98,14 +115,35 @@ def plot_units(ticks, tick_unit):
             rms_tick *= 1e3
             unit_index -= 1
 
-    ticks *= 10.0 ** (-3*unit_index)
+    mult = 10 ** (-3*unit_index)
+    ticks *= mult
+
+    # Optionally convert ticks to integers.
+    if conv_int:
+        if hasattr(ticks, '__iter__'):
+            ticks = map(lambda x: int(x) if x == int(x) else x, ticks)
+        else:
+            if ticks == int(ticks):
+                ticks = int(ticks)
 
     # Generate the unit label.
     tick_unit = units[unit_index] + tick_unit
     if unit_index == -2 or '$' in tick_unit:
         tick_unit += '$'
 
-    return (tick_unit, ticks)
+    return (tick_unit, ticks, mult)
+
+def pred_sig(infreq, samp_rate):
+    """
+    This function returns the predicted output frequency for an input
+    signal sampled at some rate.
+    """
+    nyquist = samp_rate / 2.0
+    if infreq < nyquist:
+        return infreq
+    else:
+        # Alias f_n - \delta f = f_n - (f_i - f_n) = 2f_n - f_i
+        return samp_rate - infreq
 
 def savefig(figname):
     """
@@ -118,6 +156,27 @@ def savefig(figname):
     print 'Saving plot to', figname + '.png.'
     plt.savefig(figname + '.pdf', bbox_inches='tight')
     plt.savefig(figname + '.png', bbox_inches='tight')
+
+def sig_lbl(freq, err=None):
+    """
+    Create a label for a frequency.
+    """
+    # Get the frequency in useful units.
+    freq, err = autoround(freq, err)
+    freq_u, freq, fmult = plot_units(freq, 'Hz', True)
+
+    # Start a label.
+    freq_lbl = str(freq) + ' '
+
+    # Add error, if applicable.
+    if err != None:
+        err *= fmult
+        if err == int(err):
+            err = int(err)
+        freq_lbl += r'$\pm$ ' + str(err) + ' '
+
+    freq_lbl += freq_u
+    return freq_lbl
 
 def switch_halves(array):
     """
@@ -221,29 +280,25 @@ if __name__ == '__main__':
     # start at the secondmost minimum peak frequency in the DFT. The peaks are
     # to be found by making partitions of the DFT based on the frequency
     # resolution that was measured.
-    parts = [0] # Partitions of the dft
     # Approximate number of indices for the partitions
     index_df  = 1000
     max_inds  = []
+    parts = [0] # Partitions of the dft
     while parts[-1] + index_df < len(fine_freq):
         parts.append(parts[-1] + index_df)
         max_inds.append(parts[-2] + np.argmax(fine_dft[parts[-2]:parts[-1]]))
-    max_freqs = map(lambda i: fine_dft[i], max_inds)
-    min_ind = np.argmin(max_freqs)
+    max_freqs_res = map(lambda i: fine_dft[i], max_inds)
+    min_ind = np.argmin(max_freqs_res)
     max_inds.remove(max_inds[min_ind])
-    max_freqs.remove(max_freqs[min_ind])
-    max_ps = max(max_freqs)
+    max_freqs_res.remove(max_freqs_res[min_ind])
+    max_ps = max(max_freqs_res)
 
-    start_freq   = fine_freq[max_inds[np.argmin(max_freqs)]]
+    start_freq   = fine_freq[max_inds[np.argmin(max_freqs_res)]]
     end_freq     = start_freq + freq_res
 
-    freq_height  = min(max_freqs)
+    freq_height  = min(max_freqs_res)
     freq_height1 = min(freq_height + max_ps / 10, 3.5 * max_ps / 4.5)
     freq_height2 = freq_height1 + max_ps / 20
-
-
-    print 'Measured frequency resolution:', freq_res, 'Hz'
-    print 'Predicted frequency resolution:', freq_res_th, 'Hz'
 
     # Simulate what the sampler should measure.
     print 'Simulating what the sampler should measure.'
@@ -265,24 +320,30 @@ if __name__ == '__main__':
 
     # Time to generate some plots...
     print 'Plotting...'
-
-    # Plot of the time domain of the signal, plus the power spectrum.
     plt.figure(figsize=(14,5.25))
     plt.subplot(1,2,1)
-    plt.plot(fine_time, fine_signal, 'k--', label='Input Signal')
-    plt.plot(time[:nplot], signal[:nplot], 'b', label='Observed Signal')
+
+    # Generate some labels for the plot.
+    max_freq = np.abs(freq[np.argmax(pspec_np)])
+    outlbl = 'Observed Signal: ' + sig_lbl(max_freq, freq_res_th)
+    inlbl = 'Input Signal: ' + sig_lbl(signal_freq)
+
+    # Plot of the time domain of the signal, plus the power spectrum.
+    plt.plot(fine_time, fine_signal, 'k--', label=inlbl)
+    plt.plot(time[:nplot], signal[:nplot], 'b', label=outlbl)
     ax = plt.gca()
-    time_u, time_ticks = plot_units(ax.get_xticks(), 's')
+    time_u, time_ticks, _ = plot_units(ax.get_xticks(), 's')
     ax.set_xticklabels(map(str, time_ticks))
     plt.xlabel(r'Time (' + time_u + ')')
     plt.ylabel(r'Signal (V)')
     plt.title('Time Domain')
+    plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
     plt.legend(loc='upper left', prop={'size':12})
 
     plt.subplot(1,2,2)
     plt.plot(freq, pspec_np)
     ax = plt.gca()
-    freq_u, freq_ticks = plot_units(ax.get_xticks(), 'Hz')
+    freq_u, freq_ticks, _ = plot_units(ax.get_xticks(), 'Hz')
     ax.set_xticklabels(map(str, freq_ticks))
     plt.xlabel(r'Frequency (' + freq_u + ')')
     plt.ylabel('Power Spectrum')
@@ -296,11 +357,11 @@ if __name__ == '__main__':
     # Plot an overlay of numpy's FFT vs my DFT
     plt.figure(figsize=(14,5.25))
     plt.subplot(1,2,1)
-    plt.plot(freq, pspec_dft,      label='Homemade DFT')
+    plt.plot(freq, pspec_dft, label='Homemade DFT')
     # Multiplying by 100 gives a visible offset when plotting on a log scale.
     plt.plot(freq, 100 * pspec_np, label='Numpy\'s FFT $\\times$ 100')
     ax = plt.gca()
-    freq_u, freq_ticks = plot_units(ax.get_xticks(), 'Hz')
+    freq_u, freq_ticks, _ = plot_units(ax.get_xticks(), 'Hz')
     ax.set_xticklabels(map(str, freq_ticks))
     plt.xlabel(r'Frequency (' + freq_u + ')')
     plt.ylabel('Power Spectrum')
@@ -310,7 +371,7 @@ if __name__ == '__main__':
     plt.subplot(1,2,2)
     plt.plot(freq, (pspec_dft - pspec_np) / pspec_np)
     ax = plt.gca()
-    freq_u, freq_ticks = plot_units(ax.get_xticks(), 'Hz')
+    freq_u, freq_ticks, _ = plot_units(ax.get_xticks(), 'Hz')
     ax.set_xticklabels(map(str, freq_ticks))
     plt.xlabel(r'Frequency (' + freq_u + ')')
     plt.title('Relative difference of DFT computations')
@@ -322,7 +383,7 @@ if __name__ == '__main__':
     plt.figure(figsize=(7,5.25))
     plt.plot(fine_freq, fine_dft)
     ax = plt.gca()
-    freq_u, freq_ticks = plot_units(ax.get_xticks(), 'Hz')
+    freq_u, freq_ticks, _ = plot_units(ax.get_xticks(), 'Hz')
     ax.set_xticklabels(map(str, freq_ticks))
     plt.xlabel(r'Frequency (' + freq_u + ')')
     plt.ylabel('Power Spectrum')
@@ -354,17 +415,19 @@ if __name__ == '__main__':
         savefig(outfbase + '-freq-res')
 
     # Plot the simulated signal
+    outlbl = 'Predicted signal: ' + sig_lbl(pred_sig(signal_freq, sample_rate))
     plt.figure(figsize=(7,5.25))
     ax = plt.gca()
-    plt.plot(fine_time, fine_signal, 'k', label='Input Signal')
+    plt.plot(fine_time, fine_signal, 'k', label=inlbl)
     plt.plot(time[:nplot], signal_sim[:nplot], 'b--')
-    plt.plot(time[:nplot], signal_sim[:nplot], 'bo', label='Predicted signal')
-    time_u, time_ticks = plot_units(ax.get_xticks(), 's')
+    plt.plot(time[:nplot], signal_sim[:nplot], 'bo', label=outlbl)
+    time_u, time_ticks, _ = plot_units(ax.get_xticks(), 's')
     ax.set_xticklabels(map(str, time_ticks))
     plt.xlabel(r'Time (' + time_u + ')')
     plt.ylabel(r'Signal (V)')
     plt.title('Simulation of the sampler')
     plt.legend(loc='upper left', prop={'size':12})
+    plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
     if outfbase != None:
         savefig(outfbase + '-sim')
 
