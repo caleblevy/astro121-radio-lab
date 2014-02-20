@@ -46,7 +46,10 @@ def autoround(freq, res=None):
     This function rounds frequencies based on some given frequency
     resolution.
     """
-    fpower = int(np.log10(freq))
+    if freq:
+        fpower = int(np.log10(np.abs(freq)))
+    else:
+        fpower = 1
 
     if res == None:
         freq = round(freq / 10**fpower, 2) * 10**fpower
@@ -140,10 +143,16 @@ def pred_sig(infreq, samp_rate):
     """
     nyquist = samp_rate / 2.0
     if infreq < nyquist:
-        return infreq
+        out_freq = infreq
     else:
         # Alias f_n - \delta f = f_n - (f_i - f_n) = 2f_n - f_i
-        return samp_rate - infreq
+        out_freq = samp_rate - infreq
+
+        # I'm going to ignore this case for now...
+        if out_freq < 0:
+            out_freq = 0
+
+    return out_freq
 
 def savefig(figname):
     """
@@ -161,6 +170,12 @@ def sig_lbl(freq, err=None):
     """
     Create a label for a frequency.
     """
+    # I prevented pred_sig from returning negative frequencies (for now) by
+    # having it just return 0. I'm handling this here by just saying that a
+    # label of frequency for this case is not applicable.
+    if freq == 0:
+        return 'N/A'
+
     # Get the frequency in useful units.
     freq, err = autoround(freq, err)
     freq_u, freq, fmult = plot_units(freq, 'Hz', True)
@@ -252,7 +267,7 @@ if __name__ == '__main__':
         print 'ERROR: Cannot use -N and -p simultaneously.'
         usage(1)
 
-    # Compute t and signal(t)
+    # Get the sample
     time = np.arange(nsamples, dtype=float) / sample_rate
     signal = infile['arr_1'][:nsamples]
     infile.close()
@@ -311,11 +326,17 @@ if __name__ == '__main__':
 
     # Number of points to plot is determined by the number of cycles of the
     # input wave that are getting plotted.
-    nplot = min(nsamples, ncycles * int(sample_rate / signal_freq))
+    if sample_rate / signal_freq > 1:
+        nplot = min(nsamples, ncycles * int(sample_rate / signal_freq))
+    else:
+        nplot = nsamples
 
     # Generate properly sampled signal to show what the SRS was inputting.
     fine_step = 1 / (100.0 * signal_freq)
-    fine_time = np.arange(0, time[nplot], fine_step)
+    if nplot >= len(time):
+        fine_time = np.arange(0, time[-1] + fine_step, fine_step)
+    else:
+        fine_time = np.arange(0, time[nplot], fine_step)
     fine_signal = volt_peak * np.sin(2*np.pi*signal_freq*fine_time + phase)
 
     # Time to generate some plots...
@@ -329,7 +350,13 @@ if __name__ == '__main__':
     inlbl = 'Input Signal: ' + sig_lbl(signal_freq)
 
     # Plot of the time domain of the signal, plus the power spectrum.
-    plt.plot(fine_time, fine_signal, 'k--', label=inlbl)
+    # Do not plot the theoretical signal in the case when nyquist's limit is
+    # largely violated, as it seems to require more plotting points than what
+    # matplotlib is equipped to handle.
+    if signal_freq / sample_rate < 100:
+        plt.plot(fine_time, fine_signal, 'k--', label=inlbl)
+    else: # Just create a blank line for the legend.
+        plt.plot(time[:nplot], signal[:nplot], 'w', label=inlbl, linewidth=0)
     plt.plot(time[:nplot], signal[:nplot], 'b', label=outlbl)
     ax = plt.gca()
     time_u, time_ticks, _ = plot_units(ax.get_xticks(), 's')
@@ -337,8 +364,13 @@ if __name__ == '__main__':
     plt.xlabel(r'Time (' + time_u + ')')
     plt.ylabel(r'Signal (V)')
     plt.title('Time Domain')
-    plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
     plt.legend(loc='upper left', prop={'size':12})
+
+    # Prevent index bound errors
+    if nplot >= len(time):
+        plt.axis([time[0], time[-1], -1.1 * volt_peak, 1.5 * volt_peak])
+    else:
+        plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
 
     plt.subplot(1,2,2)
     plt.plot(freq, pspec_np)
@@ -414,22 +446,31 @@ if __name__ == '__main__':
     if outfbase != None:
         savefig(outfbase + '-freq-res')
 
-    # Plot the simulated signal
-    outlbl = 'Predicted signal: ' + sig_lbl(pred_sig(signal_freq, sample_rate))
-    plt.figure(figsize=(7,5.25))
-    ax = plt.gca()
-    plt.plot(fine_time, fine_signal, 'k', label=inlbl)
-    plt.plot(time[:nplot], signal_sim[:nplot], 'b--')
-    plt.plot(time[:nplot], signal_sim[:nplot], 'bo', label=outlbl)
-    time_u, time_ticks, _ = plot_units(ax.get_xticks(), 's')
-    ax.set_xticklabels(map(str, time_ticks))
-    plt.xlabel(r'Time (' + time_u + ')')
-    plt.ylabel(r'Signal (V)')
-    plt.title('Simulation of the sampler')
-    plt.legend(loc='upper left', prop={'size':12})
-    plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
-    if outfbase != None:
-        savefig(outfbase + '-sim')
+    # Plot the simulated signal, only for signals reasonably close to the
+    # nyquist limit.
+    if signal_freq / sample_rate < 100:
+        outlbl  = 'Predicted signal: '
+        outlbl += sig_lbl(pred_sig(signal_freq, sample_rate))
+        plt.figure(figsize=(7,5.25))
+        ax = plt.gca()
+        plt.plot(fine_time, fine_signal, 'k', label=inlbl)
+        plt.plot(time[:nplot], signal_sim[:nplot], 'b--')
+        plt.plot(time[:nplot], signal_sim[:nplot], 'bo', label=outlbl)
+        time_u, time_ticks, _ = plot_units(ax.get_xticks(), 's')
+        ax.set_xticklabels(map(str, time_ticks))
+        plt.xlabel(r'Time (' + time_u + ')')
+        plt.ylabel(r'Signal (V)')
+        plt.title('Simulation of the sampler')
+        plt.legend(loc='upper left', prop={'size':12})
+
+        # Prevent index bound errors
+        if nplot >= len(time):
+            plt.axis([time[0], time[-1], -1.1 * volt_peak, 1.5 * volt_peak])
+        else:
+            plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
+
+        if outfbase != None:
+            savefig(outfbase + '-sim')
 
     if disp_plots:
         plt.show()
