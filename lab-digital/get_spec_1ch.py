@@ -353,11 +353,18 @@ if __name__ == '__main__':
     # Do not plot the theoretical signal in the case when nyquist's limit is
     # largely violated, as it seems to require more plotting points than what
     # matplotlib is equipped to handle.
-    if signal_freq / sample_rate < 100:
+    plot_inwave = signal_freq / sample_rate < 100
+    if plot_inwave:
         plt.plot(fine_time, fine_signal, 'k--', label=inlbl)
     else: # Just create a blank line for the legend.
         plt.plot(time[:nplot], signal[:nplot], 'w', label=inlbl, linewidth=0)
     plt.plot(time[:nplot], signal[:nplot], 'b', label=outlbl)
+
+    # Place dots where the samples took place
+    if plot_inwave:
+        plt.plot(time[:nplot], signal[:nplot], 'bo')
+
+    # Format axes and legends
     ax = plt.gca()
     time_u, time_ticks, _ = plot_units(ax.get_xticks(), 's')
     ax.set_xticklabels(map(str, time_ticks))
@@ -448,7 +455,7 @@ if __name__ == '__main__':
 
     # Plot the simulated signal, only for signals reasonably close to the
     # nyquist limit.
-    if signal_freq / sample_rate < 100:
+    if plot_inwave:
         outlbl  = 'Predicted signal: '
         outlbl += sig_lbl(pred_sig(signal_freq, sample_rate))
         plt.figure(figsize=(7,5.25))
