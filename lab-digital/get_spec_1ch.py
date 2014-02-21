@@ -109,7 +109,7 @@ def plot_units(ticks, tick_unit, conv_int=False):
     rms_tick = np.sqrt(np.mean(ticks**2))
     unit_index = 0
     if rms_tick > 1:
-        while rms_tick > 1:
+        while rms_tick >= 1:
             rms_tick /= 1e3
             unit_index += 1
         unit_index -= 1
@@ -431,6 +431,9 @@ if __name__ == '__main__':
     res_label += '\nMeasured $\Delta f = ' + str(round(freq_res, 1)) + '$ Hz'
     pred_label='Predicted $\Delta f = ' + str(round(freq_res_th, 1)) + '$ Hz'
     meas_label='Measured $\Delta f = ' + str(round(freq_res, 1)) + '$ Hz'
+    freq_u, sfreq_l, _ = plot_units(sample_rate, 'Hz', True)
+    legtitle  = r'$f_s$ = ' + str(sfreq_l) + ' ' + freq_u
+    legtitle += ', N = ' + str(nsamples)
     plt.plot([start_freq, end_freq],
              [freq_height2, freq_height2],
              '#555753',
@@ -448,7 +451,12 @@ if __name__ == '__main__':
              marker='d',
              markeredgewidth=1,
              markersize=6)
-    plt.legend(loc='upper left', prop={'size':12})
+    plt.legend(loc='upper left', prop={'size':12}, title=legtitle)
+    plt.axis([fine_freq[0],
+              fine_freq[-1],
+              np.min(fine_dft),
+              max(1.3 * np.max(fine_dft[:fine_dft.shape[0]/2]),
+                        np.max(fine_dft[fine_dft.shape[0]/2:]))])
     plt.tight_layout()
     if outfbase != None:
         savefig(outfbase + '-freq-res')
