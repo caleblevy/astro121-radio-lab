@@ -348,8 +348,14 @@ if __name__ == '__main__':
     max_freq = np.abs(freq[np.argmax(pspec_np)])
     outlbl = 'Observed Signal: ' + sig_lbl(max_freq, freq_res_th)
     inlbl = 'Input Signal: ' + sig_lbl(signal_freq)
+    freq_u, sfreq_l, _ = plot_units(sample_rate, 'Hz', True)
+    legtitle = 'Sampling rate: ' + str(sfreq_l) + ' ' + freq_u
 
     # Plot of the time domain of the signal, plus the power spectrum.
+
+    # Create a blank plot to create a title on the legend.
+    plt.plot(time[:nplot], signal[:nplot], 'w', label=legtitle, linewidth=0)
+
     # Do not plot the theoretical signal in the case when nyquist's limit is
     # largely violated, as it seems to require more plotting points than what
     # matplotlib is equipped to handle.
@@ -375,9 +381,9 @@ if __name__ == '__main__':
 
     # Prevent index bound errors
     if nplot >= len(time):
-        plt.axis([time[0], time[-1], -1.1 * volt_peak, 1.5 * volt_peak])
+        plt.axis([time[0], time[-1], -1.1 * volt_peak, 1.6 * volt_peak])
     else:
-        plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
+        plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.6 * volt_peak])
 
     plt.subplot(1,2,2)
     plt.plot(freq, pspec_np)
@@ -408,12 +414,19 @@ if __name__ == '__main__':
     plt.legend(loc='lower center', prop={'size':12})
 
     plt.subplot(1,2,2)
-    plt.plot(freq, (pspec_dft - pspec_np) / pspec_np)
+    pltlabel = r'$(H - N)/N$'
+    wlabel1 = 'H: Homemade DFT'
+    wlabel2 = 'N: Numpy\'s FFT'
+    rel_diff = (pspec_dft - pspec_np) / pspec_np
+    plt.plot(freq, rel_diff, label=pltlabel)
+    plt.plot(freq, rel_diff, 'w', label=wlabel1, linewidth=0)
+    plt.plot(freq, rel_diff, 'w', label=wlabel2, linewidth=0)
     ax = plt.gca()
     freq_u, freq_ticks, _ = plot_units(ax.get_xticks(), 'Hz')
     ax.set_xticklabels(map(str, freq_ticks))
     plt.xlabel(r'Frequency (' + freq_u + ')')
     plt.title('Relative difference of DFT computations')
+    plt.legend()
     plt.tight_layout()
     if outfbase != None:
         savefig(outfbase + '-compare-dft')
@@ -464,10 +477,12 @@ if __name__ == '__main__':
     # Plot the simulated signal, only for signals reasonably close to the
     # nyquist limit.
     if plot_inwave:
+        legtitle = 'Sampling rate: ' + str(sfreq_l) + ' ' + freq_u
         outlbl  = 'Predicted signal: '
         outlbl += sig_lbl(pred_sig(signal_freq, sample_rate))
         plt.figure(figsize=(7,5.25))
         ax = plt.gca()
+        plt.plot(fine_time, fine_signal, 'w', label=legtitle, linewidth=0)
         plt.plot(fine_time, fine_signal, 'k', label=inlbl)
         plt.plot(time[:nplot], signal_sim[:nplot], 'b--')
         plt.plot(time[:nplot], signal_sim[:nplot], 'bo', label=outlbl)
@@ -480,9 +495,9 @@ if __name__ == '__main__':
 
         # Prevent index bound errors
         if nplot >= len(time):
-            plt.axis([time[0], time[-1], -1.1 * volt_peak, 1.5 * volt_peak])
+            plt.axis([time[0], time[-1], -1.1 * volt_peak, 1.6 * volt_peak])
         else:
-            plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.5 * volt_peak])
+            plt.axis([time[0], time[nplot], -1.1 * volt_peak, 1.6 * volt_peak])
 
         if outfbase != None:
             savefig(outfbase + '-sim')
